@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "763888345095",
+    "firebase_url": "https://farmy-198d4-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "farmy-198d4",
+    "storage_bucket": "farmy-198d4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:763888345095:android:d69516cc06baf591f84aa2",
+        "android_client_info": {
+          "package_name": "com.example.farmy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCBpQDrufZIXUYpKEBOMzXkgW2ztod2vMo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

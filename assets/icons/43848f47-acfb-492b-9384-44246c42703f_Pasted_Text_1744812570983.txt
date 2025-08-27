@@ -1,0 +1,473 @@
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({Key? key}) : super(key: key);
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _selectedIndex = 0;
+  bool _isDeviceOn = false;
+  final Map<String, dynamic> _latestData = {
+    'animal': {'status': 'NO Detection', 'timestamp': null},
+    'bird': {'status': 'NO Detection', 'timestamp': null},
+    'fire': {'status': 'NO Detection', 'timestamp': null},
+    'moisture': {'level': 77, 'timestamp': null},
+  };
+  final List<Map<String, dynamic>> _notifications = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeData();
+  }
+
+  void _initializeData() {
+    final databaseRef = FirebaseDatabase.instance.ref().child('device/status');
+    databaseRef.onValue.listen((event) {
+      String? status = event.snapshot.value as String?;
+      setState(() {
+        _isDeviceOn = (status == "on");
+      });
+    });
+
+    final dataRef = FirebaseDatabase.instance.ref().child('agriculture_data');
+    dataRef.onChildAdded.listen((event) {
+      var snapshot = event.snapshot;
+      _processNewData(snapshot.value as Map<dynamic, dynamic>);
+    });
+  }
+
+  void _processNewData(Map<dynamic, dynamic> data) {
+    if (data['data'] != null) {
+      setState(() {
+        if (data['data']['detected_objects'] != null) {
+          List<dynamic> objects = data['data']['detected_objects'];
+          if (objects.contains('bird')) {
+            _latestData['bird'] = {
+              'status': 'Detected',
+              'timestamp': data['timestamp'],
+            };
+            _addNotification('Bird detected in your field!', data['timestamp']);
+          }
+          if (objects.any((obj) =>
+              ['cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe'].contains(obj))) {
+            _latestData['animal'] = {
+              'status': 'Detected',
+              'timestamp': data['timestamp'],
+            };
+            _addNotification('Animal detected in your field!', data['timestamp']);
+          }
+        }
+        if (data['data']['fire_detected'] == true) {
+          _latestData['fire'] = {
+            'status': 'Detected',
+            'timestamp': data['timestamp'],
+          };
+          _addNotification('FIRE detected in your field!', data['timestamp'], isUrgent: true);
+        }
+        if (data['data']['moisture_level'] != null) {
+          _latestData['moisture'] = {
+            'level': data['data']['moisture_level'],
+            'timestamp': data['timestamp'],
+          };
+          if (data['data']['moisture_alert'] == true) {
+            _addNotification('Low moisture level detected!', data['timestamp']);
+          }
+        }
+      });
+    }
+  }
+
+  void _addNotification(String message, String timestamp, {bool isUrgent = false}) {
+    setState(() {
+      _notifications.insert(0, {
+        'message': message,
+        'timestamp': timestamp,
+        'isUrgent': isUrgent,
+        'isRead': false,
+      });
+    });
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    switch (index) {
+      case 0:
+        break;
+      case 1:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const VideoStreamScreen()),
+        );
+        break;
+      case 2:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => NotificationsScreen(notifications: _notifications)),
+        );
+        break;
+      case 3:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const Settings()),
+        );
+        break;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'FERMY',
+          style: TextStyle(
+            color: Color(0xFF006400),
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: _isDeviceOn
+          ? Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: GridView.count(
+          crossAxisCount: 2,
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          children: [
+            _buildStatusCard(
+              title: 'Animal',
+              status: _latestData['animal']?['status'] ?? 'NO Detection',
+              iconPath: 'assets/icons/pa.png',
+            ),
+            _buildStatusCard(
+              title: 'Bird',
+              status: _latestData['bird']?['status'] ?? 'NO Detection',
+              iconPath: 'assets/icons/bird.png',
+            ),
+            _buildStatusCard(
+              title: 'Fire',
+              status: _latestData['fire']?['status'] ?? 'NO Detection',
+              iconPath: 'assets/icons/firess.png',
+            ),
+            _buildMoistureCard(level: (_latestData['moisture']?['level'] ?? 77).toDouble()),
+          ],
+        ),
+      )
+          : const Center(
+        child: Text(
+          'Device is not turned on',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        selectedItemColor: const Color(0xFF006400), // Dark green color
+        unselectedItemColor: Colors.grey,
+        items: [
+          BottomNavigationBarItem(
+            icon: Image.asset(
+              'assets/icons/home.png', // Path to your custom home icon
+              height: 24,
+              width: 24,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(Icons.home, size: 24); // Fallback to default icon
+              },
+            ),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Image.asset(
+              'assets/icons/video-cam.png', // Path to your custom video camera icon
+              height: 24,
+              width: 24,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(Icons.videocam, size: 24); // Fallback to default icon
+              },
+            ),
+            label: 'Live Camera',
+          ),
+          BottomNavigationBarItem(
+            icon: Image.asset(
+              'assets/icons/noti.png', // Path to your custom notifications icon
+              height: 24,
+              width: 24,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(Icons.notifications, size: 24); // Fallback to default icon
+              },
+            ),
+            label: 'Alerts',
+          ),
+          BottomNavigationBarItem(
+            icon: Image.asset(
+              'assets/icons/settings.png', // Path to your custom settings icon
+              height: 24,
+              width: 24,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(Icons.settings, size: 24); // Fallback to default icon
+              },
+            ),
+            label: 'Settings',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusCard({
+    required String title,
+    required String status,
+    required String iconPath,
+  }) {
+    bool isDetected = status.toLowerCase() != 'no detection';
+    return GestureDetector(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(title),
+            content: Text('Status: $status'),
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDetected ? Colors.red[100] : const Color(0xFFBEAFAF),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              iconPath,
+              height: 80,
+              width: 80,
+              errorBuilder: (context, error, stackTrace) {
+                return Icon(Icons.error, size: 80, color: Colors.grey);
+              },
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            AnimatedIconPulse(
+              child: Text(
+                status,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isDetected ? Colors.red : Colors.black,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMoistureCard({required double level}) {
+    return GestureDetector(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Soil Moisture'),
+            content: Text('Level: ${level.toStringAsFixed(0)}%'),
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFBEAFAF),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/icons/moisture.png',
+              height: 80,
+              width: 80,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(Icons.water_drop, size: 80, color: Colors.blue);
+              },
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Soil Moisture',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${level.toStringAsFixed(0)}%',
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class AnimatedIconPulse extends StatefulWidget {
+  final Widget child;
+
+  const AnimatedIconPulse({Key? key, required this.child}) : super(key: key);
+
+  @override
+  _AnimatedIconPulseState createState() => _AnimatedIconPulseState();
+}
+
+class _AnimatedIconPulseState extends State<AnimatedIconPulse> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 1),
+      vsync: this,
+    )..repeat(reverse: true);
+    _animation = Tween<double>(begin: 1.0, end: 1.2).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _animation,
+      child: widget.child,
+    );
+  }
+}
+
+class DeviceOffScreen extends StatefulWidget {
+  const DeviceOffScreen({Key? key}) : super(key: key);
+
+  @override
+  State<DeviceOffScreen> createState() => _DeviceOffScreenState();
+}
+
+class _DeviceOffScreenState extends State<DeviceOffScreen> {
+  int _selectedIndex = 0;
+
+  static final List<Widget> _screens = [
+    const DeviceOffMessage(),
+    const VideoStreamScreen(),
+    const NotificationsScreen(notifications: []),
+    const Settings(),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Text(
+              'FERMY',
+              style: TextStyle(
+                color: const Color(0xFF006400),
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+      body: _screens[_selectedIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        selectedItemColor: const Color(0xFF006400), // Dark green color
+        unselectedItemColor: Colors.grey,
+        items: [
+          BottomNavigationBarItem(
+            icon: Image.asset(
+              'assets/icons/home.png', // Path to your custom home icon
+              height: 24,
+              width: 24,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(Icons.home, size: 24); // Fallback to default icon
+              },
+            ),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Image.asset(
+              'assets/icons/video-cam.png', // Path to your custom video camera icon
+              height: 24,
+              width: 24,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(Icons.videocam, size: 24); // Fallback to default icon
+              },
+            ),
+            label: 'Live Camera',
+          ),
+          BottomNavigationBarItem(
+            icon: Image.asset(
+              'assets/icons/noti.png', // Path to your custom notifications icon
+              height: 24,
+              width: 24,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(Icons.notifications, size: 24); // Fallback to default icon
+              },
+            ),
+            label: 'Alerts',
+          ),
+          BottomNavigationBarItem(
+            icon: Image.asset(
+              'assets/icons/settings.png', // Path to your custom settings icon
+              height: 24,
+              width: 24,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(Icons.settings, size: 24); // Fallback to default icon
+              },
+            ),
+            label: 'Settings',
+          ),
+        ],
+      ),
+    );
+  }
+}

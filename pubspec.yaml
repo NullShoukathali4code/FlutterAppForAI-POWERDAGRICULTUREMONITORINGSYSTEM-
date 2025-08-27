@@ -1,0 +1,85 @@
+# pubspec.yaml
+
+# App metadata
+name: farmy_app  # The name of your Flutter project
+description: A smart farming app that integrates AI-based monitoring and real-time alerts for farmers.
+version: 1.0.0+1  # Version number and build number
+
+# Environment configuration
+environment:
+  sdk: ">=2.19.0 <3.0.0"  # Dart SDK version constraints
+
+# Dependencies
+dependencies:
+  flutter:
+    sdk: flutter  # Flutter framework dependency
+  firebase_core: ^2.4.0  # Firebase core library for initialization
+  shared_preferences: ^2.0.15
+  firebase_database: ^10.0.0  # Firebase Realtime Database
+  google_fonts: ^3.0.1
+  firebase_messaging: ^14.0.0  # Firebase Cloud Messaging for push notifications
+  webview_flutter: ^4.0.0  # WebView for displaying the Raspberry Pi camera feed
+  animated_text_kit: ^4.2.2  # Optional: For animated text effects
+fluttertoast: ^8.2.1  # Optional: For toast notifications
+firebase_core: ^2.12.1
+firebase_database: ^10.5.0
+
+
+
+# Development dependencies (used during development)
+dev_dependencies:
+  flutter_test:
+    sdk: flutter  # Testing framework for Flutter
+  flutter_lints: ^2.0.0  # Linting rules for better code quality
+
+# Assets (images, fonts, etc.)
+flutter:
+  assets:
+    - assets/icons/home.png
+    - assets/icons/video-cam.png
+    - assets/icons/settings.png
+    - assets/icons/warning-sign.png
+    - assets/icons/fire.png
+    - assets/icons/paws.png
+    - assets/icons/reset.png
+    - assets/icons/noti.png
+    - assets/icons/pa.png
+    - assets/icons/bird.png
+    - assets/icons/firess.png
+    - assets/icons/moisture.png
+    - assets/icons/warning.png
+    - assets/icons/delete.png
+    - assets/icons/alert_icon.png
+    - assets/icons/filter_icon.png
+    - assets/icons/refresh_icon.png
+    - assets/icons/delete.png
+    - assets/icons/noti.png
+    - assets/icons/paws.png
+    - assets/icons/bird.png
+    - assets/icons/moisture.png
+    - assets/icons/fire.png
+    - assets/icons/urgent_icon.png
+    - assets/icons/clear_icon.png
+    - assets/icons/archive_icon.png
+    - assets/icons/unarchive_icon.png
+    - assets/icons/radio_selected.png
+    - assets/icons/radio_unselected.png
+    - assets/icons/on-off-button.png
+    - assets/icons/wifi-icon.png
+    - assets/icons/cable-icon.png
+    - assets/icons/close-icon.png
+    - assets/icons/sync-icon.png
+    - assets/icons/power-icon.png
+
+
+
+  fonts:
+    - family: CustomFont  # Define custom fonts if needed
+      fonts:
+        - asset: assets/fonts/Poppins-Black.ttf
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 700
+
+# Additional configurations
+# Prevent accidental publishing to pub.dev
+publish_to: 'none'  # Do not publish this package to pub.dev <button class="citation-flag" data-index="7">
